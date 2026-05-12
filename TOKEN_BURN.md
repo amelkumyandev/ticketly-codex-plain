@@ -7,6 +7,7 @@
 | 2 | exact platform usage | 3005887 | 6848 | 3012735 | Platform totals before: input 5158934, output 37670, total 5196604. Platform totals after: input 8164821, output 44518, total 8209339. Cached input delta: 2968576. Estimated API-rate cost: USD 1.876. |
 | 3 | exact platform usage | 1612116 | 5404 | 1617520 | Platform totals before: input 8999783, output 49135, total 9048918. Platform totals after: input 10611899, output 54539, total 10666438. Cached input delta: 1598080. Estimated API-rate cost: USD 1.031. |
 | 4 | exact platform usage | 671186 | 9014 | 680200 | Platform totals before: input 0, output 0, total 0 for this Codex rollout. Platform totals after measurement: input 671186, output 9014, total 680200. Cached input after measurement: 618752. |
+| Auth add-on | exact platform usage | 4032444 | 20145 | 4052589 | Platform totals before: input 671186, output 9014, total 680200. Platform totals after measurement: input 4703630, output 29159, total 4732789. Cached input delta: 3785216. |
 
 ## Task 0 Input
 
@@ -133,6 +134,151 @@ Token usage:
 - Output tokens after measurement: 9014.
 - Total tokens after measurement: 680200.
 - Cached input tokens after measurement: 618752.
+
+## Auth Add-on Task Input
+
+User prompt:
+
+```text
+Implement the auth add-on task.
+Update TOKEN_BURN.md, EXPERIMENT_LOG.md, and EXPERIMENT_RESULT.md.
+Run build, tests, coverage if available, and token-burn estimation.
+Stop after this task.
+```
+
+Task file:
+
+```text
+TICKETLY PLAIN AUTH ADD-ON TASK
+===============================
+
+Repository:
+ticketly-plain
+
+Experiment type:
+WITHOUT knowledge base.
+
+Goal:
+Add JWT authentication and authorization to the existing Ticketly API while continuing token-burn tracking.
+
+Important:
+This repository must still NOT contain:
+- AGENTS.md
+- .github/copilot-instructions.md
+- /docs architecture or standards files
+
+This is the plain repository. Do not add a knowledge base.
+
+AUTH ADD-ON TASK - Add JWT authentication and authorization
+-----------------------------------------------------------
+
+Add authentication and authorization to the existing Ticketly API.
+
+Requirements:
+- Add an application user entity with Id, Email, PasswordHash, Role, CreatedAt.
+- Support Admin and Customer roles.
+- Add POST /api/auth/register and POST /api/auth/login.
+- Require email and password.
+- Hash passwords; never store plain text.
+- Login returns a JWT access token.
+- Invalid login returns 401 Unauthorized.
+- Duplicate email registration should fail.
+- Use JWT bearer authentication with user id, email, and role claims.
+- Read Jwt__Issuer, Jwt__Audience, Jwt__SigningKey, and Jwt__ExpiresMinutes from configuration.
+- Public: GET /health, auth endpoints, event list/detail, event ticket type list.
+- Admin only: POST /api/events, POST /api/events/{eventId}/ticket-types.
+- Customer or Admin: POST /api/reservations, GET /api/reservations/{id}.
+- Add tests for register/login and protected endpoint role behavior.
+- Update coverage, README, TOKEN_BURN.md, EXPERIMENT_LOG.md, and EXPERIMENT_RESULT.md.
+- Keep SonarQube support working.
+- Run build, tests, token estimator, and coverage script if available.
+```
+
+## Auth Add-on Task Output Summary
+
+Files created:
+- `src/Ticketly.Api/Models/ApplicationUser.cs`
+- `src/Ticketly.Api/Requests/RegisterRequest.cs`
+- `src/Ticketly.Api/Requests/LoginRequest.cs`
+- `src/Ticketly.Api/Data/Migrations/20260512070718_AddAuthenticationUsers.cs`
+- `src/Ticketly.Api/Data/Migrations/20260512070718_AddAuthenticationUsers.Designer.cs`
+
+Files modified:
+- `README.md`
+- `EXPERIMENT_LOG.md`
+- `EXPERIMENT_RESULT.md`
+- `TOKEN_BURN.md`
+- `coverage/coverage.opencover.xml`
+- `src/Ticketly.Api/Program.cs`
+- `src/Ticketly.Api/Ticketly.Api.csproj`
+- `src/Ticketly.Api/appsettings.json`
+- `src/Ticketly.Api/appsettings.Development.json`
+- `src/Ticketly.Api/Data/TicketlyDbContext.cs`
+- `src/Ticketly.Api/Data/Migrations/TicketlyDbContextModelSnapshot.cs`
+- `tests/Ticketly.Tests/TicketlyApiTests.cs`
+
+Commands executed:
+- `rg -n "auth|authentication|authorization|add-on|addon|ADD" .`
+- `git status --short`
+- `Get-ChildItem -Force`
+- `Get-Content -Path TICKETLY_PLAIN_AUTH_ADDON_TASK.txt`
+- `Get-Content -Path src\Ticketly.Api\Program.cs`
+- `Get-Content -Path tests\Ticketly.Tests\TicketlyApiTests.cs`
+- `Get-Content -Path src\Ticketly.Api\Ticketly.Api.csproj`
+- `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+- `Get-Content -Path src\Ticketly.Api\appsettings.json`
+- `Get-Content -Path src\Ticketly.Api\appsettings.Development.json`
+- `Get-Content -Path src\Ticketly.Api\Data\TicketlyDbContext.cs`
+- `Get-ChildItem -Path src\Ticketly.Api\Requests`
+- `Get-Content -Path src\Ticketly.Api\Requests\*.cs`
+- `dotnet add src\Ticketly.Api\Ticketly.Api.csproj package Microsoft.AspNetCore.Authentication.JwtBearer --version 10.0.2`
+- `dotnet build`
+- `dotnet test`
+- `dotnet tool run dotnet-ef migrations add AddAuthenticationUsers --project src\Ticketly.Api --startup-project src\Ticketly.Api`
+- `Get-ChildItem src\Ticketly.Api\Data\Migrations`
+- `Get-Content -Path src\Ticketly.Api\Data\Migrations\*AddAuthenticationUsers*.cs`
+- `.\scripts\run-tests-with-coverage.ps1`
+- `.\scripts\estimate-token-burn.ps1`
+- `Test-NetConnection -ComputerName localhost -Port 9000`
+- `docker ps`
+- local Codex rollout token-count lookup
+- final `dotnet build`
+- final `dotnet test --no-build`
+- final `.\scripts\estimate-token-burn.ps1`
+- forbidden knowledge-base file check
+- final `git status --short`
+
+Build/test/coverage/SonarQube result:
+- Build: passed; final `dotnet build` completed with 0 warnings and 0 errors.
+- Test: passed; final `dotnet test --no-build` completed with 17 passed tests.
+- Coverage: passed; `.\scripts\run-tests-with-coverage.ps1` generated `coverage/coverage.opencover.xml` with 29.15% line, 15.27% branch, and 59.49% method coverage.
+- Token estimator: passed; final `.\scripts\estimate-token-burn.ps1` reported estimated total tokens 7619, estimated input tokens 1227, and estimated output tokens 5942.
+- SonarQube: not run. `localhost:9000` was not listening and `docker ps` failed because no Docker engine pipe is available in this environment.
+
+Assumptions:
+- The auth add-on task is defined by `TICKETLY_PLAIN_AUTH_ADDON_TASK.txt`.
+- Local demo JWT settings are acceptable for development, while production secrets must be supplied through configuration or environment variables.
+- Tests can continue to use EF Core InMemory with a unique test database per factory.
+
+Manual fixes made by Codex:
+- Reran tests sequentially after an initial parallel build/test invocation caused a transient Windows file lock on the test assembly.
+- Generated the EF Core migration for the new `Users` table.
+- Documented the unchanged SonarQube runtime blocker instead of running analysis without a server.
+
+Token usage:
+- Tracking method: exact platform usage.
+- Input tokens before: 671186.
+- Output tokens before: 9014.
+- Total tokens before: 680200.
+- Cached input tokens before: 618752.
+- Input tokens after measurement: 4703630.
+- Output tokens after measurement: 29159.
+- Total tokens after measurement: 4732789.
+- Cached input tokens after measurement: 4403968.
+- Input tokens delta: 4032444.
+- Output tokens delta: 20145.
+- Total tokens delta: 4052589.
+- Cached input tokens delta: 3785216.
 
 ## Task 0 Output
 

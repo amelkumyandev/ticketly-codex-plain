@@ -11,8 +11,18 @@ public class TicketlyDbContext(DbContextOptions<TicketlyDbContext> options) : Db
 
     public DbSet<Reservation> Reservations => Set<Reservation>();
 
+    public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(user => user.Email).HasMaxLength(320).IsRequired();
+            entity.Property(user => user.PasswordHash).IsRequired();
+            entity.Property(user => user.Role).HasMaxLength(50).IsRequired();
+            entity.HasIndex(user => user.Email).IsUnique();
+        });
+
         modelBuilder.Entity<Event>(entity =>
         {
             entity.Property(ticketEvent => ticketEvent.Name).HasMaxLength(200).IsRequired();

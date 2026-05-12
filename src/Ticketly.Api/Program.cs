@@ -1,19 +1,47 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Ticketly.Api.Data;
 using Ticketly.Api.Models;
 using Ticketly.Api.Requests;
 
 var builder = WebApplication.CreateBuilder(args);
+var jwtSettings = GetJwtSettings(builder.Configuration);
 
 builder.Services.AddDbContext<TicketlyDbContext>(options =>
 {
     if (builder.Environment.IsEnvironment("Testing"))
     {
-        options.UseInMemoryDatabase("ticketly-tests");
+        options.UseInMemoryDatabase(builder.Configuration["TestingDatabaseName"] ?? "ticketly-tests");
         return;
     }
 
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("CustomerOrAdmin", policy => policy.RequireRole("Customer", "Admin"));
 });
 builder.Services.AddOpenApi();
 
@@ -25,8 +53,69 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }))
     .WithName("Health");
+
+app.MapPost("/api/auth/register", async (RegisterRequest request, TicketlyDbContext dbContext) =>
+{
+    var validationError = ValidateAuthInput(request.Email, request.Password);
+    if (validationError is not null)
+    {
+        return Results.BadRequest(new { error = validationError });
+    }
+
+    var role = NormalizeRole(request.Role);
+    if (role is null)
+    {
+        return Results.BadRequest(new { error = "Role must be Admin or Customer." });
+    }
+
+    var email = request.Email.Trim().ToLowerInvariant();
+    var emailExists = await dbContext.Users.AnyAsync(user => user.Email.ToLower() == email);
+    if (emailExists)
+    {
+        return Results.BadRequest(new { error = "Email is already registered." });
+    }
+
+    var user = new ApplicationUser
+    {
+        Email = email,
+        PasswordHash = HashPassword(request.Password),
+        Role = role,
+        CreatedAt = DateTimeOffset.UtcNow
+    };
+
+    dbContext.Users.Add(user);
+    await dbContext.SaveChangesAsync();
+
+    return Results.Created($"/api/users/{user.Id}", ToUserResponse(user));
+});
+
+app.MapPost("/api/auth/login", async (LoginRequest request, TicketlyDbContext dbContext) =>
+{
+    var validationError = ValidateAuthInput(request.Email, request.Password);
+    if (validationError is not null)
+    {
+        return Results.BadRequest(new { error = validationError });
+    }
+
+    var email = request.Email.Trim().ToLowerInvariant();
+    var user = await dbContext.Users.SingleOrDefaultAsync(applicationUser => applicationUser.Email.ToLower() == email);
+    if (user is null || !VerifyPassword(request.Password, user.PasswordHash))
+    {
+        return Results.Unauthorized();
+    }
+
+    return Results.Ok(new
+    {
+        accessToken = CreateAccessToken(user, jwtSettings),
+        tokenType = "Bearer",
+        expiresInMinutes = jwtSettings.ExpiresMinutes
+    });
+});
 
 app.MapPost("/api/events", async (CreateEventRequest request, TicketlyDbContext dbContext) =>
 {
@@ -47,7 +136,7 @@ app.MapPost("/api/events", async (CreateEventRequest request, TicketlyDbContext 
     await dbContext.SaveChangesAsync();
 
     return Results.Created($"/api/events/{ticketEvent.Id}", ToEventResponse(ticketEvent));
-});
+}).RequireAuthorization("AdminOnly");
 
 app.MapGet("/api/events", async (TicketlyDbContext dbContext) =>
 {
@@ -121,7 +210,7 @@ app.MapPost("/api/events/{eventId:guid}/ticket-types", async (
     await dbContext.SaveChangesAsync();
 
     return Results.Created($"/api/events/{eventId}/ticket-types/{ticketType.Id}", ToTicketTypeResponse(ticketType));
-});
+}).RequireAuthorization("AdminOnly");
 
 app.MapGet("/api/events/{eventId:guid}/ticket-types", async (Guid eventId, TicketlyDbContext dbContext) =>
 {
@@ -187,7 +276,7 @@ app.MapPost("/api/reservations", async (CreateReservationRequest request, Ticket
     await dbContext.SaveChangesAsync();
 
     return Results.Created($"/api/reservations/{reservation.Id}", ToReservationResponse(reservation));
-});
+}).RequireAuthorization("CustomerOrAdmin");
 
 app.MapGet("/api/reservations/{id:guid}", async (Guid id, TicketlyDbContext dbContext) =>
 {
@@ -196,7 +285,7 @@ app.MapGet("/api/reservations/{id:guid}", async (Guid id, TicketlyDbContext dbCo
     return reservation is null
         ? Results.NotFound()
         : Results.Ok(ToReservationResponse(reservation));
-});
+}).RequireAuthorization("CustomerOrAdmin");
 
 app.Run();
 
@@ -229,5 +318,130 @@ static object ToReservationResponse(Reservation reservation) => new
     reservation.CustomerEmail,
     reservation.CreatedAt
 };
+
+static object ToUserResponse(ApplicationUser user) => new
+{
+    user.Id,
+    user.Email,
+    user.Role,
+    user.CreatedAt
+};
+
+static JwtSettings GetJwtSettings(IConfiguration configuration)
+{
+    var issuer = configuration["Jwt:Issuer"] ?? configuration["Jwt__Issuer"];
+    var audience = configuration["Jwt:Audience"] ?? configuration["Jwt__Audience"];
+    var signingKey = configuration["Jwt:SigningKey"] ?? configuration["Jwt__SigningKey"];
+    var expiresMinutesValue = configuration["Jwt:ExpiresMinutes"] ?? configuration["Jwt__ExpiresMinutes"];
+
+    if (string.IsNullOrWhiteSpace(issuer)
+        || string.IsNullOrWhiteSpace(audience)
+        || string.IsNullOrWhiteSpace(signingKey))
+    {
+        throw new InvalidOperationException("JWT configuration requires issuer, audience, and signing key.");
+    }
+
+    if (Encoding.UTF8.GetByteCount(signingKey) < 32)
+    {
+        throw new InvalidOperationException("JWT signing key must be at least 32 bytes.");
+    }
+
+    var expiresMinutes = int.TryParse(expiresMinutesValue, out var parsedExpiresMinutes) && parsedExpiresMinutes > 0
+        ? parsedExpiresMinutes
+        : 60;
+
+    return new JwtSettings(issuer, audience, signingKey, expiresMinutes);
+}
+
+static string? ValidateAuthInput(string email, string password)
+{
+    if (string.IsNullOrWhiteSpace(email))
+    {
+        return "Email is required.";
+    }
+
+    if (string.IsNullOrWhiteSpace(password))
+    {
+        return "Password is required.";
+    }
+
+    return null;
+}
+
+static string? NormalizeRole(string role)
+{
+    if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        return "Admin";
+    }
+
+    if (role.Equals("Customer", StringComparison.OrdinalIgnoreCase))
+    {
+        return "Customer";
+    }
+
+    return null;
+}
+
+static string HashPassword(string password)
+{
+    const int iterations = 100_000;
+    var salt = RandomNumberGenerator.GetBytes(16);
+    var hash = Rfc2898DeriveBytes.Pbkdf2(
+        password,
+        salt,
+        iterations,
+        HashAlgorithmName.SHA256,
+        32);
+
+    return $"pbkdf2-sha256${iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
+}
+
+static bool VerifyPassword(string password, string passwordHash)
+{
+    var parts = passwordHash.Split('$');
+    if (parts.Length != 4
+        || parts[0] != "pbkdf2-sha256"
+        || !int.TryParse(parts[1], out var iterations))
+    {
+        return false;
+    }
+
+    var salt = Convert.FromBase64String(parts[2]);
+    var expectedHash = Convert.FromBase64String(parts[3]);
+    var actualHash = Rfc2898DeriveBytes.Pbkdf2(
+        password,
+        salt,
+        iterations,
+        HashAlgorithmName.SHA256,
+        expectedHash.Length);
+
+    return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
+}
+
+static string CreateAccessToken(ApplicationUser user, JwtSettings jwtSettings)
+{
+    var claims = new[]
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.Role)
+    };
+
+    var signingCredentials = new SigningCredentials(
+        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
+        SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        issuer: jwtSettings.Issuer,
+        audience: jwtSettings.Audience,
+        claims: claims,
+        expires: DateTime.UtcNow.AddMinutes(jwtSettings.ExpiresMinutes),
+        signingCredentials: signingCredentials);
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+internal sealed record JwtSettings(string Issuer, string Audience, string SigningKey, int ExpiresMinutes);
 
 public partial class Program;

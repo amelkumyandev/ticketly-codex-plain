@@ -59,15 +59,96 @@ Health check:
 Invoke-RestMethod http://localhost:5165/health
 ```
 
+## JWT Configuration
+
+Ticketly uses JWT bearer authentication for protected write and reservation endpoints.
+
+Configuration keys can come from `appsettings.json`, user secrets, or environment variables:
+
+```powershell
+$env:Jwt__Issuer = "ticketly-local"
+$env:Jwt__Audience = "ticketly-api"
+$env:Jwt__SigningKey = "replace-with-a-long-random-secret-at-least-32-bytes"
+$env:Jwt__ExpiresMinutes = "60"
+```
+
+The repository includes local demo JWT settings so the API can run for development. Replace the signing key before using the API outside a local demo.
+
 ## API Endpoints
 
-- `POST /api/events`
+Public:
+
+- `GET /health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
 - `GET /api/events`
 - `GET /api/events/{id}`
-- `POST /api/events/{eventId}/ticket-types`
 - `GET /api/events/{eventId}/ticket-types`
+
+Admin only:
+
+- `POST /api/events`
+- `POST /api/events/{eventId}/ticket-types`
+
+Customer or Admin:
+
 - `POST /api/reservations`
 - `GET /api/reservations/{id}`
+
+## Authentication
+
+Register a user:
+
+```powershell
+$admin = Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:5165/api/auth/register `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@example.com","password":"Passw0rd!","role":"Admin"}'
+```
+
+Supported roles are `Admin` and `Customer`.
+
+Login:
+
+```powershell
+$login = Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:5165/api/auth/login `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@example.com","password":"Passw0rd!"}'
+
+$headers = @{ Authorization = "Bearer $($login.accessToken)" }
+```
+
+Call a protected endpoint:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:5165/api/events `
+  -Headers $headers `
+  -ContentType "application/json" `
+  -Body '{"name":"Launch Night","venue":"Main Hall","startsAt":"2026-06-01T19:00:00Z"}'
+```
+
+Example Admin flow:
+
+```powershell
+$adminLogin = Invoke-RestMethod -Method Post -Uri http://localhost:5165/api/auth/login -ContentType "application/json" -Body '{"email":"admin@example.com","password":"Passw0rd!"}'
+$adminHeaders = @{ Authorization = "Bearer $($adminLogin.accessToken)" }
+$event = Invoke-RestMethod -Method Post -Uri http://localhost:5165/api/events -Headers $adminHeaders -ContentType "application/json" -Body '{"name":"Launch Night","venue":"Main Hall","startsAt":"2026-06-01T19:00:00Z"}'
+$ticketType = Invoke-RestMethod -Method Post -Uri "http://localhost:5165/api/events/$($event.id)/ticket-types" -Headers $adminHeaders -ContentType "application/json" -Body '{"name":"General Admission","price":25,"currency":"USD","totalQuantity":100}'
+```
+
+Example Customer flow:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:5165/api/auth/register -ContentType "application/json" -Body '{"email":"customer@example.com","password":"Passw0rd!","role":"Customer"}'
+$customerLogin = Invoke-RestMethod -Method Post -Uri http://localhost:5165/api/auth/login -ContentType "application/json" -Body '{"email":"customer@example.com","password":"Passw0rd!"}'
+$customerHeaders = @{ Authorization = "Bearer $($customerLogin.accessToken)" }
+Invoke-RestMethod -Method Post -Uri http://localhost:5165/api/reservations -Headers $customerHeaders -ContentType "application/json" -Body "{`"ticketTypeId`":`"$($ticketType.id)`",`"quantity`":2,`"customerEmail`":`"customer@example.com`"}"
+```
 
 ## Database Migrations
 

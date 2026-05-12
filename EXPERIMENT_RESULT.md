@@ -172,3 +172,31 @@ SonarQube result:
 - Coverage focuses on the required core behavior and does not exhaustively cover all validation and not-found branches.
 - SonarQube analysis must be run by a user after starting SonarQube and setting `SONAR_TOKEN`.
 - The API does not automatically apply migrations on startup.
+
+## Authentication and Authorization Summary
+
+- JWT implemented: Yes.
+- Register endpoint: Yes, `POST /api/auth/register`.
+- Login endpoint: Yes, `POST /api/auth/login`.
+- Password hashing: Yes, PBKDF2-SHA256 with per-password random salt.
+- Role-based authorization: Yes, `Admin` and `Customer` roles.
+- Auth tests count: 9 explicit auth/authorization tests, plus existing behavior tests updated to use bearer tokens where required.
+- Build result: passed; final `dotnet build` completed with 0 warnings and 0 errors.
+- Test result: passed; final `dotnet test --no-build` completed with 17 passed tests.
+- Coverage result: passed; line 29.15%, branch 15.27%, method 59.49%.
+- SonarQube result if available: not available in this environment. `localhost:9000` is not listening and Docker cannot connect to a local engine pipe.
+- Token tracking method: exact platform usage from Codex rollout token-count events.
+- Input tokens: 4032444.
+- Output tokens: 20145.
+- Total tokens: 4052589.
+- Local estimator result: estimated total tokens 7619, estimated input tokens 1227, estimated output tokens 5942.
+- Manual fixes: generated `AddAuthenticationUsers` EF Core migration, reran tests sequentially after a transient Windows file lock, and documented the SonarQube runtime blocker.
+- Known limitations: demo JWT signing key is present only for local development and must be replaced outside local demos; password policy only enforces non-empty passwords; duplicate email checking is application-level plus a unique database index; reservation inventory still lacks explicit concurrency handling.
+
+Auth add-on changes:
+
+- Added `ApplicationUser` persistence with `Email`, `PasswordHash`, `Role`, and `CreatedAt`.
+- Added JWT bearer authentication and role policies.
+- Protected write/reservation endpoints according to the auth add-on task.
+- Added README instructions for JWT configuration, registration, login, bearer token calls, Admin flow, and Customer flow.
+- Kept SonarQube compose and scripts in place.

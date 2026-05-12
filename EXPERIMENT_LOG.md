@@ -354,3 +354,83 @@
   - output tokens after measurement: 9014
   - total tokens after measurement: 680200
   - cached input tokens after measurement: 618752
+
+## Auth Add-on Task - Add JWT authentication and authorization
+
+- Task name: Auth Add-on Task - Add JWT authentication and authorization
+- Start time: 2026-05-12 11:04:34 +04:00
+- Finish time: 2026-05-12 11:08:57 +04:00
+- Status: completed
+- Commands executed:
+  - `rg -n "auth|authentication|authorization|add-on|addon|ADD" .`
+  - `git status --short`
+  - `Get-ChildItem -Force`
+  - `Get-Content -Path TICKETLY_PLAIN_AUTH_ADDON_TASK.txt`
+  - `Get-Content -Path src\Ticketly.Api\Program.cs`
+  - `Get-Content -Path tests\Ticketly.Tests\TicketlyApiTests.cs`
+  - `Get-Content -Path src\Ticketly.Api\Ticketly.Api.csproj`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - `Get-Content -Path src\Ticketly.Api\appsettings.json`
+  - `Get-Content -Path src\Ticketly.Api\appsettings.Development.json`
+  - `Get-Content -Path src\Ticketly.Api\Data\TicketlyDbContext.cs`
+  - `Get-ChildItem -Path src\Ticketly.Api\Requests`
+  - `Get-Content -Path src\Ticketly.Api\Requests\*.cs`
+  - `dotnet add src\Ticketly.Api\Ticketly.Api.csproj package Microsoft.AspNetCore.Authentication.JwtBearer --version 10.0.2`
+  - `dotnet build`
+  - `dotnet test`
+  - `dotnet tool run dotnet-ef migrations add AddAuthenticationUsers --project src\Ticketly.Api --startup-project src\Ticketly.Api`
+  - `Get-ChildItem src\Ticketly.Api\Data\Migrations`
+  - `Get-Content -Path src\Ticketly.Api\Data\Migrations\*AddAuthenticationUsers*.cs`
+  - `.\scripts\run-tests-with-coverage.ps1`
+  - `.\scripts\estimate-token-burn.ps1`
+  - `Test-NetConnection -ComputerName localhost -Port 9000`
+  - `docker ps`
+  - local Codex rollout token-count lookup
+  - final `dotnet build`
+  - final `dotnet test --no-build`
+  - final `.\scripts\estimate-token-burn.ps1`
+  - forbidden knowledge-base file check
+  - final `git status --short`
+- Build result: passed; final `dotnet build` completed with 0 warnings and 0 errors
+- Test result: passed; final `dotnet test --no-build` completed with 17 passed tests
+- Coverage result: passed; `.\scripts\run-tests-with-coverage.ps1` generated `coverage/coverage.opencover.xml` with 29.15% line, 15.27% branch, and 59.49% method coverage
+- SonarQube result: not run; `localhost:9000` was not listening and `docker ps` failed because no Docker engine pipe is available
+- Files changed:
+  - `README.md`
+  - `EXPERIMENT_LOG.md`
+  - `EXPERIMENT_RESULT.md`
+  - `TOKEN_BURN.md`
+  - `coverage/coverage.opencover.xml`
+  - `src/Ticketly.Api/Program.cs`
+  - `src/Ticketly.Api/Ticketly.Api.csproj`
+  - `src/Ticketly.Api/appsettings.json`
+  - `src/Ticketly.Api/appsettings.Development.json`
+  - `src/Ticketly.Api/Data/TicketlyDbContext.cs`
+  - `src/Ticketly.Api/Data/Migrations/20260512070718_AddAuthenticationUsers.cs`
+  - `src/Ticketly.Api/Data/Migrations/20260512070718_AddAuthenticationUsers.Designer.cs`
+  - `src/Ticketly.Api/Data/Migrations/TicketlyDbContextModelSnapshot.cs`
+  - `src/Ticketly.Api/Models/ApplicationUser.cs`
+  - `src/Ticketly.Api/Requests/RegisterRequest.cs`
+  - `src/Ticketly.Api/Requests/LoginRequest.cs`
+  - `tests/Ticketly.Tests/TicketlyApiTests.cs`
+- Manual fixes or assumptions:
+  - The auth add-on task is defined by `TICKETLY_PLAIN_AUTH_ADDON_TASK.txt`.
+  - Added local demo JWT settings for development only; production secrets should be supplied through configuration or environment variables.
+  - Used PBKDF2-SHA256 password hashing with per-password random salt.
+  - Used a unique EF Core InMemory database per test factory to avoid cross-test state leakage.
+  - Reran tests sequentially after an initial parallel build/test invocation caused a transient Windows file lock on the test assembly.
+  - SonarQube analysis remains blocked by missing local Docker engine and closed `localhost:9000`.
+- Token usage:
+  - tracking method: exact platform usage
+  - input tokens before: 671186
+  - output tokens before: 9014
+  - total tokens before: 680200
+  - cached input tokens before: 618752
+  - input tokens after measurement: 4703630
+  - output tokens after measurement: 29159
+  - total tokens after measurement: 4732789
+  - cached input tokens after measurement: 4403968
+  - input tokens delta: 4032444
+  - output tokens delta: 20145
+  - total tokens delta: 4052589
+  - cached input tokens delta: 3785216

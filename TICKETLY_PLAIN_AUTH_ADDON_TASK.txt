@@ -1,0 +1,207 @@
+TICKETLY PLAIN AUTH ADD-ON TASK
+===============================
+
+Repository:
+ticketly-plain
+
+Experiment type:
+WITHOUT knowledge base.
+
+Goal:
+Add JWT authentication and authorization to the existing Ticketly API while continuing token-burn tracking.
+
+Important:
+This repository must still NOT contain:
+- AGENTS.md
+- .github/copilot-instructions.md
+- /docs architecture or standards files
+
+This is the plain repository. Do not add a knowledge base.
+
+
+MANDATORY TOKEN-BURN TRACKING
+-----------------------------
+
+Before starting this task:
+- Update TOKEN_BURN.md with the full task prompt under a new section named "Auth Add-on Task Input".
+- Update EXPERIMENT_LOG.md with start time and task name.
+
+After completing this task:
+- Update TOKEN_BURN.md with output summary under "Auth Add-on Task Output Summary".
+- If exact platform token usage is available, record exact input/output/total tokens.
+- If exact platform token usage is not available, run scripts/estimate-token-burn.ps1 and record estimated token usage.
+- Clearly mark the method as:
+  - exact platform usage
+  or
+  - estimated local usage
+
+Do not skip token tracking.
+
+
+AUTH ADD-ON TASK - Add JWT authentication and authorization
+-----------------------------------------------------------
+
+Add authentication and authorization to the existing Ticketly API.
+
+Requirements:
+
+1. Add user model and persistence.
+
+Create an application user entity with:
+- Id
+- Email
+- PasswordHash
+- Role
+- CreatedAt
+
+Supported roles:
+- Admin
+- Customer
+
+2. Add authentication endpoints.
+
+Add:
+
+POST /api/auth/register
+POST /api/auth/login
+
+Register request:
+- Email
+- Password
+- Role
+
+Login request:
+- Email
+- Password
+
+Rules:
+- Email is required.
+- Password is required.
+- Password must not be stored as plain text.
+- Password must be hashed.
+- Login returns a JWT access token.
+- Invalid login returns 401 Unauthorized.
+- Duplicate email registration should fail.
+
+3. Add JWT support.
+
+Use JWT bearer authentication.
+
+JWT should include:
+- user id
+- email
+- role
+
+Configuration should be read from appsettings or environment variables.
+
+Use local demo settings if needed, but do not hardcode production secrets in source code.
+
+Expected configuration keys:
+- Jwt__Issuer
+- Jwt__Audience
+- Jwt__SigningKey
+- Jwt__ExpiresMinutes
+
+4. Add authorization rules.
+
+Protect the existing Ticketly endpoints:
+
+Public:
+- GET /health
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/events
+- GET /api/events/{id}
+- GET /api/events/{eventId}/ticket-types
+
+Admin only:
+- POST /api/events
+- POST /api/events/{eventId}/ticket-types
+
+Customer or Admin:
+- POST /api/reservations
+- GET /api/reservations/{id}
+
+5. Update tests.
+
+Add or update tests for:
+- Register succeeds with valid data.
+- Register fails for duplicate email.
+- Login succeeds with valid credentials.
+- Login fails with invalid credentials.
+- Admin-only endpoint rejects anonymous users.
+- Admin-only endpoint rejects Customer role.
+- Admin-only endpoint accepts Admin role.
+- Reservation endpoint rejects anonymous users.
+- Reservation endpoint accepts Customer role.
+
+6. Update coverage.
+
+Run coverage command and update coverage notes.
+
+7. Update README.
+
+README must include:
+- JWT configuration
+- How to register a user
+- How to login
+- How to call protected endpoints with Bearer token
+- Example Admin flow
+- Example Customer flow
+
+8. Keep SonarQube support working.
+
+Do not remove:
+- docker-compose.sonarqube.yml
+- scripts/run-tests-with-coverage.ps1
+- scripts/run-sonarqube-analysis.ps1
+
+If scripts need updates, update them.
+
+Run:
+- dotnet build
+- dotnet test
+- scripts/estimate-token-burn.ps1
+
+If coverage script exists, run:
+- scripts/run-tests-with-coverage.ps1
+
+If SonarQube token is available, run:
+- scripts/run-sonarqube-analysis.ps1 -Token "<token>"
+
+If any command cannot run in the current environment, document the reason in EXPERIMENT_LOG.md.
+
+Update:
+- README.md
+- TOKEN_BURN.md
+- EXPERIMENT_LOG.md
+- EXPERIMENT_RESULT.md
+
+Stop after this task.
+
+
+FINAL AUTH ADD-ON RESULT
+------------------------
+
+After completion, EXPERIMENT_RESULT.md must include:
+
+Authentication and authorization summary:
+- JWT implemented: Yes/No
+- Register endpoint: Yes/No
+- Login endpoint: Yes/No
+- Password hashing: Yes/No
+- Role-based authorization: Yes/No
+- Auth tests count:
+- Build result:
+- Test result:
+- Coverage result:
+- SonarQube result if available:
+- Token tracking method:
+- Input tokens:
+- Output tokens:
+- Total tokens:
+- Manual fixes:
+- Known limitations:
+
+Important:
+Do not add a knowledge base to the plain repository.
