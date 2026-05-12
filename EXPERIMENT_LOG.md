@@ -1,0 +1,356 @@
+# Experiment Log
+
+## Task 0 - Initialize repository and tracking
+
+- Task number: 0
+- Task name: Initialize repository and tracking
+- Start time: 2026-05-11 09:46:41 +04:00
+- Finish time: 2026-05-11 09:49:29 +04:00
+- Commands executed:
+  - `Get-ChildItem -Force | Select-Object Mode,LastWriteTime,Length,Name`
+  - `Get-Content -LiteralPath TICKETLY_PLAIN_CODEX_TASKS.txt`
+  - `git status --short`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - local Codex SQLite/rollout token query via Python
+  - `dotnet new sln -n Ticketly --format sln`
+  - `dotnet new webapi -n Ticketly.Api -o src\Ticketly.Api --framework net10.0`
+  - `dotnet new xunit -n Ticketly.Tests -o tests\Ticketly.Tests --framework net10.0`
+  - `dotnet sln Ticketly.sln add src\Ticketly.Api\Ticketly.Api.csproj tests\Ticketly.Tests\Ticketly.Tests.csproj`
+  - `Get-Content -LiteralPath src\Ticketly.Api\Program.cs`
+  - `Get-Content -LiteralPath src\Ticketly.Api\Ticketly.Api.csproj`
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\Ticketly.Tests.csproj`
+  - `dotnet add src\Ticketly.Api\Ticketly.Api.csproj package Npgsql.EntityFrameworkCore.PostgreSQL`
+  - `dotnet add src\Ticketly.Api\Ticketly.Api.csproj package Microsoft.EntityFrameworkCore.Design --version 10.0.4`
+  - `dotnet add tests\Ticketly.Tests\Ticketly.Tests.csproj reference src\Ticketly.Api\Ticketly.Api.csproj`
+  - `dotnet build`
+  - `.\scripts\estimate-token-burn.ps1`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - `git status --short`
+  - `Get-ChildItem -Recurse -File | Where-Object { $_.FullName -notmatch '\\.git\\|\\bin\\|\\obj\\' } | Select-Object FullName`
+  - local Codex SQLite/rollout token query via Python
+  - `.\scripts\estimate-token-burn.ps1` (final verification after tracking update)
+  - `git status --short` (final verification)
+  - `Get-Content -LiteralPath EXPERIMENT_LOG.md` (final verification)
+  - `Get-Content -LiteralPath TOKEN_BURN.md` (final verification)
+- Build result: passed (`dotnet build` completed with 0 warnings and 0 errors)
+- Test result: not run (Task 0 required `dotnet build` only)
+- Files changed:
+  - `.dockerignore`
+  - `EXPERIMENT_LOG.md`
+  - `README.md`
+  - `TOKEN_BURN.md`
+  - `Ticketly.sln`
+  - `docker-compose.yml`
+  - `scripts/estimate-token-burn.ps1`
+  - `src/Ticketly.Api/Program.cs`
+  - `src/Ticketly.Api/Ticketly.Api.csproj`
+  - `src/Ticketly.Api/Ticketly.Api.http`
+  - `src/Ticketly.Api/appsettings.Development.json`
+  - `src/Ticketly.Api/appsettings.json`
+  - `src/Ticketly.Api/Data/TicketlyDbContext.cs`
+  - `src/Ticketly.Api/Dockerfile`
+  - `src/Ticketly.Api/Properties/launchSettings.json`
+  - `tests/Ticketly.Tests/Ticketly.Tests.csproj`
+  - `tests/Ticketly.Tests/UnitTest1.cs`
+- Manual fixes or assumptions:
+  - Exact platform token usage is available from local Codex session rollout logs.
+  - Task 0 requires `dotnet build`; tests are not required for this task.
+  - Created `Ticketly.sln` with `--format sln` because .NET 10 defaults to `.slnx`.
+  - Pinned `Microsoft.EntityFrameworkCore.Design` to 10.0.4 to align with the EF Core version resolved by `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.1.
+  - Added a minimal EF Core `TicketlyDbContext`; domain entities and migrations are left for later tasks.
+  - Added `GET /health` returning a successful JSON response.
+  - Local estimator output before final log update: estimated total tokens 319, estimated input tokens 229, estimated output tokens 3.
+  - Local estimator output after final tracking update: estimated total tokens 1134, estimated input tokens 229, estimated output tokens 801.
+- Token usage:
+  - tracking method: exact platform usage
+  - input tokens before: 1854906
+  - output tokens before: 15497
+  - total tokens before: 1870403
+  - cached input tokens before: 1702144
+  - input tokens after: 2606735
+  - output tokens after: 20310
+  - total tokens after: 2627045
+  - cached input tokens after: 2443904
+  - input tokens delta: 751829
+  - output tokens delta: 4813
+  - total tokens delta: 756642
+  - cached input tokens delta: 741760
+  - estimated cost: USD 0.566 API-rate estimate using GPT-5.5 standard pricing with cached input discount; actual Codex subscription billing may differ
+
+## Task 1 - Implement event ticket reservation API
+
+- Task number: 1
+- Task name: Implement event ticket reservation API
+- Start time: 2026-05-11 09:51:47 +04:00
+- Finish time: 2026-05-11 09:56:38 +04:00
+- Commands executed:
+  - `Get-Content -LiteralPath TICKETLY_PLAIN_CODEX_TASKS.txt`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - local Codex SQLite/rollout token query via Python
+  - `git status --short`
+  - `Get-Content -LiteralPath src\Ticketly.Api\Program.cs`
+  - `Get-Content -LiteralPath src\Ticketly.Api\Data\TicketlyDbContext.cs`
+  - `Get-Content -LiteralPath src\Ticketly.Api\Ticketly.Api.csproj`
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\UnitTest1.cs`
+  - `dotnet add src\Ticketly.Api\Ticketly.Api.csproj package Microsoft.EntityFrameworkCore.Design --version 10.0.4`
+  - `dotnet ef --version`
+  - `dotnet build` (failed with expression tree local function errors)
+  - `dotnet new tool-manifest --force`
+  - `dotnet tool install dotnet-ef --version 10.0.4`
+  - `dotnet build`
+  - `dotnet tool run dotnet-ef migrations add InitialCreate --project src\Ticketly.Api\Ticketly.Api.csproj --startup-project src\Ticketly.Api\Ticketly.Api.csproj --output-dir Data\Migrations`
+  - `dotnet build`
+  - `dotnet test` (failed due file lock caused by running concurrently with build)
+  - `dotnet test`
+  - `Get-ChildItem -Recurse -File src\Ticketly.Api\Data\Migrations | Select-Object FullName`
+  - `Get-ChildItem -Force | Select-Object Mode,LastWriteTime,Length,Name`
+  - `Get-Content -LiteralPath dotnet-tools.json`
+  - `git status --short`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - `Get-ChildItem -Recurse -File | Where-Object { $_.FullName -notmatch '\\.git\\|\\bin\\|\\obj\\' } | Select-Object FullName`
+  - local Codex SQLite/rollout token query via Python
+- Build result: passed (`dotnet build` completed with 0 warnings and 0 errors)
+- Test result: passed (`dotnet test` completed with 1 passed test)
+- Files changed:
+  - `README.md`
+  - `TOKEN_BURN.md`
+  - `EXPERIMENT_LOG.md`
+  - `dotnet-tools.json`
+  - `src/Ticketly.Api/Program.cs`
+  - `src/Ticketly.Api/Ticketly.Api.csproj`
+  - `src/Ticketly.Api/Data/TicketlyDbContext.cs`
+  - `src/Ticketly.Api/Data/Migrations/20260511055448_InitialCreate.cs`
+  - `src/Ticketly.Api/Data/Migrations/20260511055448_InitialCreate.Designer.cs`
+  - `src/Ticketly.Api/Data/Migrations/TicketlyDbContextModelSnapshot.cs`
+  - `src/Ticketly.Api/Models/Event.cs`
+  - `src/Ticketly.Api/Models/Reservation.cs`
+  - `src/Ticketly.Api/Models/TicketType.cs`
+  - `src/Ticketly.Api/Requests/CreateEventRequest.cs`
+  - `src/Ticketly.Api/Requests/CreateReservationRequest.cs`
+  - `src/Ticketly.Api/Requests/CreateTicketTypeRequest.cs`
+- Manual fixes or assumptions:
+  - Exact platform token usage is available from local Codex session rollout logs.
+  - User requested the next task, interpreted as Task 1 only.
+  - Implemented the API with minimal API endpoints and EF Core persistence.
+  - Added a repo-local `dotnet-ef` tool manifest because the globally available `dotnet ef` is version 8.0.8, while this project uses EF Core 10.
+  - Fixed EF query projections after the first build failed because expression trees cannot reference local response helper functions.
+  - Reran `dotnet test` after an initial file lock caused by running `dotnet build` and `dotnet test` concurrently.
+- Token usage:
+  - tracking method: exact platform usage
+  - input tokens before: 3069532
+  - output tokens before: 25433
+  - total tokens before: 3094965
+  - cached input tokens before: 2880512
+  - input tokens after: 4717572
+  - output tokens after: 33075
+  - total tokens after: 4750647
+  - cached input tokens after: 4510208
+  - input tokens delta: 1648040
+  - output tokens delta: 7642
+  - total tokens delta: 1655682
+  - cached input tokens delta: 1629696
+  - estimated cost: USD 1.136 API-rate estimate using GPT-5.5 standard pricing with cached input discount; actual Codex subscription billing may differ
+
+## Task 2 - Add tests and coverage
+
+- Task number: 2
+- Task name: Add tests and coverage
+- Start time: 2026-05-11 14:10:29 +04:00
+- Finish time: 2026-05-11 14:16:53 +04:00
+- Commands executed:
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - local Codex SQLite/rollout token query via Python
+  - `git status --short`
+  - `Select-String -Path TICKETLY_PLAIN_CODEX_TASKS.txt -Pattern "TASK 2" -Context 0,35`
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\Ticketly.Tests.csproj`
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\UnitTest1.cs`
+  - `Get-Content -LiteralPath src\Ticketly.Api\Program.cs`
+  - `Get-Content -LiteralPath README.md`
+  - `dotnet add tests\Ticketly.Tests\Ticketly.Tests.csproj package Microsoft.AspNetCore.Mvc.Testing --version 10.0.2`
+  - `dotnet add tests\Ticketly.Tests\Ticketly.Tests.csproj package Microsoft.EntityFrameworkCore.InMemory --version 10.0.4` (first parallel attempt did not persist)
+  - `dotnet build` (failed because the InMemory package reference was not present)
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\Ticketly.Tests.csproj`
+  - `dotnet list tests\Ticketly.Tests\Ticketly.Tests.csproj package --include-transitive`
+  - `rg "InMemory" tests\Ticketly.Tests\obj\project.assets.json`
+  - `dotnet add tests\Ticketly.Tests\Ticketly.Tests.csproj package Microsoft.EntityFrameworkCore.InMemory --version 10.0.4`
+  - `dotnet build`
+  - `dotnet test` (failed with EF provider conflict in test host)
+  - `dotnet test --filter CreateEventSucceedsWithValidData`
+  - `dotnet add src\Ticketly.Api\Ticketly.Api.csproj package Microsoft.EntityFrameworkCore.InMemory --version 10.0.4`
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\TicketlyApiTests.cs`
+  - `dotnet test --filter CreateEventSucceedsWithValidData`
+  - `dotnet build`
+  - `dotnet test`
+  - `dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - `Get-ChildItem -Recurse -File TestResults | Select-Object FullName`
+  - `git status --short`
+  - local Codex SQLite/rollout token query via Python
+- Build result: passed (`dotnet build` completed with 0 warnings and 0 errors)
+- Test result: passed (`dotnet test` completed with 8 passed tests)
+- Coverage result: passed (`dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults` generated `TestResults/48500339-b7ae-428d-b20e-7be51612ac4f/coverage.cobertura.xml`)
+- Files changed:
+  - `README.md`
+  - `EXPERIMENT_LOG.md`
+  - `TOKEN_BURN.md`
+  - `src/Ticketly.Api/Program.cs`
+  - `src/Ticketly.Api/Ticketly.Api.csproj`
+  - `tests/Ticketly.Tests/Ticketly.Tests.csproj`
+  - `tests/Ticketly.Tests/TicketlyApiTests.cs`
+  - `tests/Ticketly.Tests/UnitTest1.cs` (removed)
+- Manual fixes or assumptions:
+  - Exact platform token usage is available from local Codex session rollout logs.
+  - User requested the next task, interpreted as Task 2 only.
+  - Added API-level behavior tests using `WebApplicationFactory`.
+  - Added `Microsoft.AspNetCore.Mvc.Testing` for test hosting and `Microsoft.EntityFrameworkCore.InMemory` for test data storage.
+  - Added Testing-environment in-memory DbContext configuration to the API so runtime PostgreSQL behavior stays unchanged.
+  - Coverage uses the existing `coverlet.collector` package from the xUnit template and writes under `TestResults`.
+  - Fixed the test host EF provider conflict by making the API choose the in-memory provider when `ASPNETCORE_ENVIRONMENT` is `Testing`.
+- Token usage:
+  - tracking method: exact platform usage
+  - input tokens before: 5158934
+  - output tokens before: 37670
+  - total tokens before: 5196604
+  - cached input tokens before: 4853760
+  - input tokens after: 8164821
+  - output tokens after: 44518
+  - total tokens after: 8209339
+  - cached input tokens after: 7822336
+  - input tokens delta: 3005887
+  - output tokens delta: 6848
+  - total tokens delta: 3012735
+  - cached input tokens delta: 2968576
+  - estimated cost: USD 1.876 API-rate estimate using GPT-5.5 standard pricing with cached input discount; actual Codex subscription billing may differ
+
+## Task 3 - Add SonarQube local analysis
+
+- Task number: 3
+- Task name: Add SonarQube local analysis
+- Start time: 2026-05-11 14:19:18 +04:00
+- Finish time: 2026-05-11 14:22:15 +04:00
+- Commands executed:
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - local Codex SQLite/rollout token query via Python
+  - `git status --short`
+  - `Select-String -Path TICKETLY_PLAIN_CODEX_TASKS.txt -Pattern "TASK 3" -Context 0,36`
+  - `dotnet tool install dotnet-sonarscanner`
+  - `dotnet add tests\Ticketly.Tests\Ticketly.Tests.csproj package coverlet.msbuild --version 6.0.4`
+  - `Get-Content -LiteralPath README.md`
+  - `Get-Content -LiteralPath dotnet-tools.json`
+  - `Get-Content -LiteralPath scripts\run-sonarqube-analysis.ps1`
+  - `Get-Content -LiteralPath scripts\run-tests-with-coverage.ps1`
+  - `Get-Content -LiteralPath dotnet-tools.json`
+  - `Get-Content -LiteralPath tests\Ticketly.Tests\Ticketly.Tests.csproj`
+  - `dotnet build`
+  - `dotnet test`
+  - `.\scripts\run-tests-with-coverage.ps1`
+  - `docker compose -f docker-compose.sonarqube.yml config`
+  - PowerShell parser syntax check for `scripts\run-sonarqube-analysis.ps1`
+  - PowerShell parser syntax check for `scripts\run-tests-with-coverage.ps1`
+  - `Get-ChildItem -Recurse -File coverage | Select-Object FullName`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - `git status --short`
+  - `Get-ChildItem -Recurse -File | Where-Object { $_.FullName -notmatch '\\.git\\|\\bin\\|\\obj\\|\\TestResults\\' } | Select-Object FullName`
+  - local Codex SQLite/rollout token query via Python
+- Build result: passed (`dotnet build` completed with 0 warnings and 0 errors)
+- Test result: passed (`dotnet test` completed with 8 passed tests)
+- Files changed:
+  - `README.md`
+  - `EXPERIMENT_LOG.md`
+  - `TOKEN_BURN.md`
+  - `docker-compose.sonarqube.yml`
+  - `dotnet-tools.json`
+  - `scripts/run-sonarqube-analysis.ps1`
+  - `scripts/run-tests-with-coverage.ps1`
+  - `tests/Ticketly.Tests/Ticketly.Tests.csproj`
+  - `coverage/coverage.opencover.xml`
+- Manual fixes or assumptions:
+  - Exact platform token usage is available from local Codex session rollout logs.
+  - User requested the next task, interpreted as Task 3 only.
+  - Added SonarQube local Docker Compose support in a separate compose file.
+  - Added repo-local `dotnet-sonarscanner` 11.2.1 tool.
+  - Added `coverlet.msbuild` for OpenCover output used by SonarQube analysis.
+  - Added Windows PowerShell scripts for coverage and SonarQube analysis.
+  - Did not execute a full SonarQube analysis because it requires a running local SonarQube instance and a user-generated token.
+  - Verified Docker Compose syntax with `docker compose -f docker-compose.sonarqube.yml config`.
+- Token usage:
+  - tracking method: exact platform usage
+  - input tokens before: 8999783
+  - output tokens before: 49135
+  - total tokens before: 9048918
+  - cached input tokens before: 8616192
+  - input tokens after: 10611899
+  - output tokens after: 54539
+  - total tokens after: 10666438
+  - cached input tokens after: 10214272
+  - input tokens delta: 1612116
+  - output tokens delta: 5404
+  - total tokens delta: 1617520
+  - cached input tokens delta: 1598080
+  - estimated cost: USD 1.031 API-rate estimate using GPT-5.5 standard pricing with cached input discount; actual Codex subscription billing may differ
+
+## Task 4 - Final self-review and experiment result
+
+- Task number: 4
+- Task name: Final self-review and experiment result
+- Start time: 2026-05-11 19:15:46 +04:00
+- Finish time: 2026-05-11 19:18:35 +04:00
+- Commands executed:
+  - `git status --short`
+  - `Get-ChildItem -Force`
+  - `rg --files`
+  - `Get-Content -Path TICKETLY_PLAIN_CODEX_TASKS.txt`
+  - `Get-Content -Path src\Ticketly.Api\Program.cs`
+  - `Get-Content -Path tests\Ticketly.Tests\TicketlyApiTests.cs`
+  - `Get-Content -Path README.md`
+  - `Get-Content -Path src\Ticketly.Api\Ticketly.Api.csproj`
+  - `Get-Content -Path tests\Ticketly.Tests\Ticketly.Tests.csproj`
+  - `Get-Content -Path scripts\estimate-token-burn.ps1`
+  - `Get-Content -Path scripts\run-tests-with-coverage.ps1`
+  - `Get-Content -Path scripts\run-sonarqube-analysis.ps1`
+  - `Test-Path -LiteralPath EXPERIMENT_RESULT.md`
+  - `Get-Content -Path EXPERIMENT_LOG.md -Tail 80`
+  - `Get-Content -Path TOKEN_BURN.md -Tail 120`
+  - `Get-Content -Path dotnet-tools.json`
+  - `Get-Date -Format "yyyy-MM-dd HH:mm:ss K"`
+  - `dotnet build`
+  - `dotnet test`
+  - `.\scripts\run-tests-with-coverage.ps1`
+  - `.\scripts\estimate-token-burn.ps1`
+  - `Get-ChildItem Env: | Where-Object { $_.Name -match 'CODEX|OPENAI' } | Sort-Object Name`
+  - `Get-Content -Path TOKEN_BURN.md -Head 80`
+  - `Get-Content -Path EXPERIMENT_LOG.md -Head 80`
+  - `Get-ChildItem -Path $env:USERPROFILE\.codex -Force | Select-Object Mode,LastWriteTime,Length,Name`
+  - `rg --files $env:USERPROFILE\.codex | rg "(sqlite|db|jsonl|rollout|session|history)"`
+  - `rg "usage|input_tokens|output_tokens|cached" $env:USERPROFILE\.codex\sessions\2026\05\11\rollout-2026-05-11T19-14-41-019e179a-ce43-7b20-96be-2c84b3f45878.jsonl`
+  - `Get-Content -Path docker-compose.yml`
+  - `Get-Content -Path docker-compose.sonarqube.yml`
+  - `Get-Content -Path src\Ticketly.Api\Data\TicketlyDbContext.cs`
+  - `Get-Content -Path src\Ticketly.Api\Models\Event.cs; Get-Content -Path src\Ticketly.Api\Models\TicketType.cs; Get-Content -Path src\Ticketly.Api\Models\Reservation.cs`
+  - Final `.\scripts\estimate-token-burn.ps1`
+  - Forbidden knowledge-base file check
+  - Final `git status --short`
+- Build result: passed (`dotnet build` completed with 0 warnings and 0 errors)
+- Test result: passed (`dotnet test` completed with 8 passed tests)
+- Coverage result: passed; `.\scripts\run-tests-with-coverage.ps1` generated `coverage/coverage.opencover.xml` with 23.22% line, 7.08% branch, and 51.66% method coverage
+- SonarQube result: local compose file and analysis script are present; full analysis was not run because it requires a running SonarQube instance and `SONAR_TOKEN`
+- Files changed:
+  - `EXPERIMENT_LOG.md`
+  - `EXPERIMENT_RESULT.md`
+  - `TOKEN_BURN.md`
+  - `coverage/coverage.opencover.xml`
+- Manual fixes or assumptions:
+  - The request means complete the remaining formal task in `TICKETLY_PLAIN_CODEX_TASKS.txt`.
+  - Created the missing final experiment result file.
+  - Regenerated coverage during final verification.
+  - Exact platform token usage was read from the current Codex rollout JSONL token-count events.
+  - SonarQube full analysis remains documented for local execution because this environment does not have a configured SonarQube token.
+- Token usage:
+  - tracking method: exact platform usage
+  - input tokens before: 0 for this Codex rollout
+  - output tokens before: 0 for this Codex rollout
+  - total tokens before: 0 for this Codex rollout
+  - input tokens after measurement: 671186
+  - output tokens after measurement: 9014
+  - total tokens after measurement: 680200
+  - cached input tokens after measurement: 618752

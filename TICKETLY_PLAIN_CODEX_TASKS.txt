@@ -1,0 +1,310 @@
+TICKETLY PLAIN CODEX TASKS
+==========================
+
+Repository:
+ticketly-plain
+
+Experiment type:
+WITHOUT knowledge base.
+
+Goal:
+Build a small .NET 10 Web API for event ticket reservation using PostgreSQL, Docker Compose, tests, test coverage, SonarQube, and token-burn tracking.
+
+Important:
+This repository must NOT contain:
+- AGENTS.md
+- .github/copilot-instructions.md
+- /docs/architecture.md
+- /docs/coding-standards.md
+- /docs/api-guidelines.md
+- /docs/testing-guidelines.md
+- /docs/sonarqube-guidelines.md
+
+Do not add a project knowledge base.
+
+The purpose of this repository is to observe what Codex produces when it receives only normal project requirements.
+
+
+MANDATORY TOKEN-BURN TRACKING
+-----------------------------
+
+Before implementing application code, create:
+
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+- scripts/estimate-token-burn.ps1
+
+Codex must track token usage as much as it can.
+
+Required behavior:
+1. Before each task, append the full user task prompt to TOKEN_BURN.md.
+2. After each task, append a summary of what Codex produced:
+   - files created
+   - files modified
+   - commands executed
+   - build/test/coverage/SonarQube result
+   - assumptions
+   - manual fixes made by Codex
+3. If exact platform token usage is available in the environment, record exact input tokens and output tokens.
+4. If exact platform token usage is not available, calculate an estimated token count using a reproducible local estimator.
+5. Do not skip token tracking.
+6. Mark the method clearly as either:
+   - exact platform usage
+   - estimated local usage
+
+The PowerShell script scripts/estimate-token-burn.ps1 should estimate tokens from local experiment files.
+A simple acceptable approximation is:
+- characters / 4 = estimated tokens
+
+The script should read TOKEN_BURN.md and print:
+- estimated total tokens
+- estimated input tokens
+- estimated output tokens if sections can be separated
+- estimation method
+
+The goal is not perfect billing accuracy. The goal is to have a consistent token-burn measurement method for comparing this repository with the knowledge-base repository.
+
+TOKEN_BURN.md must contain this table:
+
+| Task | Tracking Method | Input Tokens | Output Tokens | Total Tokens | Notes |
+|---|---|---:|---:|---:|---|
+
+
+TASK 0 - Initialize repository and tracking
+-------------------------------------------
+
+Create the repository baseline for ticketly-plain.
+
+Create:
+- .NET 10 solution named Ticketly
+- ASP.NET Core Web API project
+- xUnit test project
+- Dockerfile
+- docker-compose.yml with PostgreSQL
+- README.md
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+- scripts/estimate-token-burn.ps1
+
+Application requirements:
+- Use .NET 10
+- Use ASP.NET Core Web API
+- Use PostgreSQL
+- Use Entity Framework Core
+- Use Docker Compose
+- Use xUnit tests
+
+Add a simple health endpoint:
+
+GET /health
+
+Run:
+- dotnet build
+
+Update:
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+
+Stop after this task.
+
+
+TASK 1 - Implement event ticket reservation API
+-----------------------------------------------
+
+Implement a small event ticket reservation API.
+
+Entities:
+
+Event:
+- Id
+- Name
+- Venue
+- StartsAt
+- CreatedAt
+
+TicketType:
+- Id
+- EventId
+- Name
+- Price
+- Currency
+- TotalQuantity
+- AvailableQuantity
+- CreatedAt
+
+Reservation:
+- Id
+- TicketTypeId
+- Quantity
+- CustomerEmail
+- CreatedAt
+
+Endpoints:
+
+POST /api/events
+GET /api/events
+GET /api/events/{id}
+
+POST /api/events/{eventId}/ticket-types
+GET /api/events/{eventId}/ticket-types
+
+POST /api/reservations
+GET /api/reservations/{id}
+
+Business rules:
+- Event name is required.
+- Ticket type belongs to an event.
+- Ticket type price cannot be negative.
+- Ticket type TotalQuantity must be greater than zero.
+- Ticket type AvailableQuantity initially equals TotalQuantity.
+- Reservation quantity must be greater than zero.
+- Reservation fails if not enough tickets are available.
+- Reservation reduces AvailableQuantity.
+- Reservation requires CustomerEmail.
+
+Use PostgreSQL through EF Core.
+
+Add database migration support.
+
+Run:
+- dotnet build
+- dotnet test
+
+Update:
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+
+Stop after this task.
+
+
+TASK 2 - Add tests and coverage
+-------------------------------
+
+Add automated tests for core behavior.
+
+Required test cases:
+- Create event succeeds with valid data.
+- Create ticket type succeeds for an existing event.
+- Ticket type AvailableQuantity initially equals TotalQuantity.
+- Reservation succeeds when enough tickets are available.
+- Reservation reduces AvailableQuantity.
+- Reservation fails when not enough tickets are available.
+- Reservation fails when quantity is zero or negative.
+
+Add test coverage collection.
+
+Requirements:
+- Add coverage tooling.
+- Add command to generate coverage.
+- README.md must explain how to run tests with coverage.
+- Coverage output should be generated under a coverage or TestResults folder.
+
+Run:
+- dotnet build
+- dotnet test
+- the coverage command
+
+Update:
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+
+Stop after this task.
+
+
+TASK 3 - Add SonarQube local analysis
+-------------------------------------
+
+Add local SonarQube support.
+
+Requirements:
+- Add SonarQube to Docker Compose or create docker-compose.sonarqube.yml.
+- Include any database required by SonarQube.
+- Add a script for SonarQube analysis if useful.
+- README.md must explain:
+  - how to start SonarQube
+  - how to run tests with coverage
+  - how to run SonarQube analysis
+  - where to view results
+
+The project should support local analysis on Windows PowerShell.
+
+Prefer scripts that work on Windows:
+- scripts/run-tests-with-coverage.ps1
+- scripts/run-sonarqube-analysis.ps1
+
+Run:
+- dotnet build
+- dotnet test
+
+If SonarQube cannot be fully executed in the current environment, still create the working Docker Compose and PowerShell scripts, and document the exact commands to run locally.
+
+Update:
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+
+Stop after this task.
+
+
+TASK 4 - Final self-review and experiment result
+------------------------------------------------
+
+Create EXPERIMENT_RESULT.md.
+
+Include:
+
+Project:
+ticketly-plain
+
+Experiment type:
+Without knowledge base
+
+Summarize:
+- what was built
+- project structure
+- database setup
+- test setup
+- coverage setup
+- SonarQube setup
+- token-burn tracking method
+- estimated or exact token usage
+- build result
+- test result
+- coverage result if available
+- SonarQube result if available
+- manual fixes required
+- assumptions made
+- known limitations
+
+Run:
+- dotnet build
+- dotnet test
+- scripts/estimate-token-burn.ps1
+
+Update:
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+- EXPERIMENT_RESULT.md
+
+Stop after this task.
+
+
+FINAL REQUIREMENTS
+------------------
+
+The final repository must contain:
+
+- Working .NET 10 Web API
+- PostgreSQL through Docker Compose
+- EF Core persistence
+- Basic ticket reservation behavior
+- xUnit tests
+- Test coverage command
+- Local SonarQube setup
+- Windows PowerShell scripts
+- README.md
+- EXPERIMENT_LOG.md
+- TOKEN_BURN.md
+- EXPERIMENT_RESULT.md
+- Token-burn estimate script
+
+The repository must NOT contain a knowledge base.
